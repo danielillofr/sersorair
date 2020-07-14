@@ -1,0 +1,20 @@
+{
+  "name": "ionizador",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": "ioniza.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@serialport/parser-inter-byte-timeout": "^9.0.0",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "mongoose": "^5.9.24",
+    "serialport": "^9.0.0",
+    "socket.io": "^2.3.0"
+  }
+}
