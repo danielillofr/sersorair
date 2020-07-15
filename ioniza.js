@@ -2,8 +2,30 @@ const config = require('./config/config')
 serialport = require ('serialport')
 datosDBs = require('./dbs/datos')
 const mongoose = require('mongoose');
-
 const capturaDBs = require ('./dbs/captura')
+
+const express = require('express')
+const socketIO = require('socket.io')
+const bodyParser = require('body-parser')
+const path = require('path')
+const http = require('http')
+const app = express();
+
+let server = http.createServer(app);
+let io = socketIO(server);
+
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+
+// parse application/json
+app.use(bodyParser.json());
+
+
+
+app.use(express.static(path.resolve(__dirname, '../public')));
+
+app.use(require('./routes/captura'));
+
 
 if (process.argv.length < 3) {
     console.log('Indique un comentario (sin espacios)')
@@ -87,6 +109,10 @@ parser.on('data', (datos)=>{
             .catch((error)=>{
                 console.log('Error:', error)
             })
+            io.emit('Medida',{
+                pm25: valorPM10,
+                pm10: valorPM10
+            } )
         }else{
             console.log('Muestra perdida porque no estaba lista la base de datos')
         }
@@ -94,5 +120,20 @@ parser.on('data', (datos)=>{
     }
 })
 
+io.on('connection', (socket)=>{
+    console.log('Cliente conectado');
+    setTimeout(()=>{
+        io.emit('Medida',{
+            pm25: 25,
+            pm10: 10
+        } )
+},2000);
+    socket.on('disconnect', ()=>{
+        console.log('Cliente desconectado')
+    })
+})
 
+server.listen(process.env.PORT, () => {
+    console.log('Escuchando puerto: ', 3000);
+});
 
