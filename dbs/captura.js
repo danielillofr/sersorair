@@ -1,5 +1,5 @@
 const Captura = require('./../models/captura');
-const Datos = require('./../models/datos')
+const Datos = require('./../models/datos');
 
 Crear_captura = (comentario) => {
     fecha = new Date();
@@ -36,6 +36,7 @@ Obtener_capturas = () => {
 
 Obtener_captura = (id) => {
     return new Promise((resolve,reject)=>{
+        console.log('A ver')
         Datos.find({capturaID: id}, (err, datos)=>{
             if (err) {
                 reject(err);
@@ -47,7 +48,7 @@ Obtener_captura = (id) => {
 }
 
 //Localiza un valor dentro del rango de valores, el del momento concreto
-Localizar_valor = (datos, momento) => {
+Localizar_valor_pm25 = (datos, momento) => {
     muestra = 0;
     if (momento > Date.parse(datos[datos.length - 1].fecha)) { //Si no hay muestras posteriores al momento, nos quedamos con la última
         return datos[datos.length - 1].pm25;
@@ -67,19 +68,90 @@ Localizar_valor = (datos, momento) => {
 
 Crear_array_25 = async(capturaID, fechaInicial, fechaFinal, tiempo) => {
     try {
-        datos = await Obtener_captura(capturaID)
-        fecha = new Date(Date.parse(fechaInicial));
-        fechaFin = new Date(Date.parse(fechaFinal));
+        datos = await Obtener_captura(capturaID);
+        if (fechaInicial)
+        {
+            fecha = new Date(Date.parse(fechaInicial));
+        }else{
+            fecha = new Date(Date.parse(datos[0].fecha));
+        }
+        if (fechaFinal) {
+            fechaFin = new Date(Date.parse(fechaFinal));
+        }else{
+            fechaFin = new Date(Date.parse(datos[datos.length - 1].fecha));
+        }
+        if (!tiempo) tiempo=10;
+        console.log(`${fecha}-${fechaFin}`)
         valores = [];
+        fechas = [];
         while (fecha < fechaFin) {
-            valor = Localizar_valor(datos, fecha);
+            valor = Localizar_valor_pm25(datos, fecha);
             valores.push(valor);
+            fechas.push(fecha);
             fecha.setSeconds(fecha.getSeconds() + tiempo);
         }
-        return valores;
+        console.log('Fin del while')
+        return {
+            valores,
+            fechas
+        }
     }catch(error) {
         throw new Error(error);
     }
 }
 
-module.exports = {Crear_captura,Obtener_capturas,Obtener_captura,Crear_array_25}
+//Localiza un valor dentro del rango de valores, el del momento concreto
+Localizar_valor_pm10 = (datos, momento) => {
+    muestra = 0;
+    if (momento > Date.parse(datos[datos.length - 1].fecha)) { //Si no hay muestras posteriores al momento, nos quedamos con la última
+        return datos[datos.length - 1].pm10;
+    }
+    while(momento > Date.parse(datos[muestra].fecha))
+    {
+        muestra++;
+    }
+    if (muestra > 0) {
+        return datos[muestra - 1].pm10;//LUEGO HAY QUE CAMBIAR ESTO A LA MUESTRA ANTERIOR
+
+    }else{
+        return datos[muestra].pm10;//No debe ocurrir nunca, ya que cogemos un día antes para evitar esto.
+    }
+
+}
+
+Crear_array_10 = async(capturaID, fechaInicial, fechaFinal, tiempo) => {
+    try {
+        datos = await Obtener_captura(capturaID);
+        if (fechaInicial)
+        {
+            fecha = new Date(Date.parse(fechaInicial));
+        }else{
+            fecha = new Date(Date.parse(datos[0].fecha));
+        }
+        if (fechaFinal) {
+            fechaFin = new Date(Date.parse(fechaFinal));
+        }else{
+            fechaFin = new Date(Date.parse(datos[datos.length - 1].fecha));
+        }
+        if (!tiempo) tiempo=10;
+        console.log(`${fecha}-${fechaFin}`)
+        valores = [];
+        fechas = [];
+        while (fecha < fechaFin) {
+            valor = Localizar_valor_pm10(datos, fecha);
+            valores.push(valor);
+            fechas.push(fecha);
+            fecha.setSeconds(fecha.getSeconds() + tiempo);
+        }
+        console.log('Fin del while')
+        return {
+            valores,
+            fechas
+        }
+    }catch(error) {
+        throw new Error(error);
+    }
+}
+
+
+module.exports = {Crear_captura,Obtener_capturas,Obtener_captura,Crear_array_25,Crear_array_10}

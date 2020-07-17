@@ -22,13 +22,15 @@ app.use(bodyParser.json());
 
 
 
-app.use(express.static(path.resolve(__dirname, '../public')));
+// app.use(express.static(path.resolve(__dirname, './public')));
+app.use(express.static( './public'));
+console.log('./public')
 
 app.use(require('./routes/captura'));
 
 
-if (process.argv.length < 3) {
-    console.log('Indique un comentario (sin espacios)')
+if (process.argv.length < 5) {
+    console.log('Indique un comentario (sin espacios), puerto com y puerto lan')
     return;
 }
 
@@ -81,9 +83,15 @@ Conectar_y_crear_captura (process.env.URLDB, process.argv[2])
         console.log('Error:', error)
     })
 
-const com = new serialport("COM5", {
+const com = new serialport(process.argv[3], {
     baudRate: 9600
 })
+
+com.on('error', function(err) {
+    console.log('Error: ', err.message)
+    process.exit(1);
+  })
+
 const parser = com.pipe(new InterByteTimeout({interval: 30}))
 parser.on('data', (datos)=>{
     array = [...datos];
@@ -122,18 +130,52 @@ parser.on('data', (datos)=>{
 
 io.on('connection', (socket)=>{
     console.log('Cliente conectado');
-    setTimeout(()=>{
-        io.emit('Medida',{
-            pm25: 25,
-            pm10: 10
-        } )
-},2000);
+    
     socket.on('disconnect', ()=>{
         console.log('Cliente desconectado')
     })
 })
 
-server.listen(process.env.PORT, () => {
-    console.log('Escuchando puerto: ', 3000);
+app.get('/captura25', (req,res)=>{
+        capturaDBs.Crear_array_25(idCaptura,null,null,null)
+            .then((valores)=>{
+                res.json({
+                    ok: true,
+                    datos: valores
+                })
+            })
+            .catch((err)=>{
+                console.log(err);
+                res.json({
+                    ok: false,
+                    err
+                })
+            })
+})
+app.get('/captura10', (req,res)=>{
+        capturaDBs.Crear_array_10(idCaptura,null,null,null)
+            .then((valores)=>{
+                res.json({
+                    ok: true,
+                    datos: valores
+                })
+            })
+            .catch((err)=>{
+                console.log(err);
+                res.json({
+                    ok: false,
+                    err
+                })
+            })
+})
+
+app.get('/comentario', (req,res)=>{
+    res.json({
+        comentario: process.argv[2]
+    })
+})
+
+server.listen(process.argv[4], () => {
+    console.log('Escuchando puerto: ', process.argv[4]);
 });
 
