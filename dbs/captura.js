@@ -69,33 +69,45 @@ Localizar_valor_pm25 = (datos, momento) => {
 Crear_array_25 = async(capturaID, fechaInicial, fechaFinal, tiempo) => {
     try {
         datos = await Obtener_captura(capturaID);
-        if (fechaInicial)
-        {
-            fecha = new Date(Date.parse(fechaInicial));
-        }else{
-            fecha = new Date(Date.parse(datos[0].fecha));
-        }
-        if (fechaFinal) {
-            fechaFin = new Date(Date.parse(fechaFinal));
-        }else{
-            fechaFin = new Date(Date.parse(datos[datos.length - 1].fecha));
-        }
-        if (!tiempo) tiempo=10;
-        console.log(`${fecha}-${fechaFin}`)
         valores = [];
         fechas = [];
-        while (fecha < fechaFin) {
-            valor = Localizar_valor_pm25(datos, fecha);
-            valores.push(valor);
-            fechas.push(fecha);
-            fecha.setSeconds(fecha.getSeconds() + tiempo);
+        if (datos.length > 0)
+        {
+            if (fechaInicial)
+            {
+                fecha = new Date(Date.parse(fechaInicial));
+            }else{
+                fecha = new Date(Date.parse(datos[0].fecha));
+            }
+            if (fechaFinal) {
+                fechaFin = new Date(Date.parse(fechaFinal));
+            }else{
+                fechaFin = new Date(Date.parse(datos[datos.length - 1].fecha));
+            }
+            if (!tiempo){
+                if (datos.length < 500)
+                {
+                    tiempo = 1;
+                }else{
+                    auxT = fechaFin.getTime() - fecha.getTime();
+                    tiempo = auxT / 500000;
+                }
+            }
+            console.log(`${fecha}-${fechaFin} con tiempo ${tiempo}`)
+            while (fecha < fechaFin) {
+                valor = Localizar_valor_pm25(datos, fecha);
+                valores.push(valor);
+                fechas.push(`${fecha.getHours()}:${fecha.getMinutes()}`);
+                fecha.setSeconds(fecha.getSeconds() + tiempo);
+            }
+            console.log('Fin del while:')
         }
-        console.log('Fin del while')
         return {
             valores,
             fechas
         }
     }catch(error) {
+        console.log(error)
         throw new Error(error);
     }
 }

@@ -21,11 +21,19 @@ Conectar_base_datos = (urlDb) => {
 Crear_csv = async(captura) => {
     console.log(captura)
     try{
-        fichero = ['Fecha;PM2.5;PM10'];
+        fichero = ['Fecha;Tiempo(HH:MM:SS);Tiempo(ms);PM2.5;PM10'];
         datos = await Obtener_captura(captura._id);
+        let tiempoInicial = 0;
+        if (datos.length > 0) {
+            tiempoInicial = datos[0].fecha.getTime();
+        }
         for(j = 0;j < datos.length; j++){
             // fechaMuestra = Date.parse(datos[i].fecha)
-            linea = `${datos[j].fecha.toLocaleString()};${datos[j].pm25};${datos[j].pm10}`;
+            // linea = `${datos[j].fecha.toLocaleString()};${datos[j].pm25};${datos[j].pm10}`;
+            let tiempo = new Date();
+            tiempo.setTime(datos[j].fecha.getTime() - tiempoInicial);
+            linea = `${datos[j].fecha.toLocaleString()};${datos[j].fecha.getHours() - 1};${datos[j].fecha.getMinutes()};${tiempo.getHours() - 1}:${tiempo.getMinutes()};${(datos[j].fecha.getTime() - tiempoInicial)/1000};${datos[j].pm25};${datos[j].pm10}`;
+
             fichero.push(linea);
         }
         total = fichero.join('\n');

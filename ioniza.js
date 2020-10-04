@@ -29,9 +29,24 @@ console.log('./public')
 app.use(require('./routes/captura'));
 
 
-if (process.argv.length < 5) {
-    console.log('Indique un comentario (sin espacios), puerto com y puerto lan')
+if (process.argv.length < 6) {
+    console.log('Indique un comentario (sin espacios), puerto com,puerto lan y tipo de sensor')
     return;
+}
+
+let configuracion;
+
+switch(process.argv[5]){
+	case 'honeywell': {
+		configuracion = config.honeywell;		
+	}break;
+	case 'panasonic': {
+		configuracion = config.panasonic;		
+	}break;
+	default:{
+		console.log('Tipo de sensores válidos: Panasonic, Honeywell');
+		return;
+	}
 }
 
 
@@ -84,7 +99,8 @@ Conectar_y_crear_captura (process.env.URLDB, process.argv[2])
     })
 
 const com = new serialport(process.argv[3], {
-    baudRate: 9600
+    baudRate: 9600,
+    parity: configuracion.paridad
 })
 
 com.on('error', function(err) {
@@ -95,20 +111,50 @@ com.on('error', function(err) {
 const parser = com.pipe(new InterByteTimeout({interval: 30}))
 parser.on('data', (datos)=>{
     array = [...datos];
+    trama = ''
+    for (i = 0; i < array.length; i++) {
+        trama = trama + `${array[i]}-`;
+    }
+     console.log(trama);     
     if (array.length == 32) {
-        valorPM25 = array[6] * 256;
-        valorPM25 += array[7];
-        valorPM10 = array[8] * 256;
-        valorPM10 += array[9];
+        switch (configuracion.tipo){
+            case 'honeywell':
+            {
+                valorPM25 = array[6] * 256;
+                valorPM25 += array[7];
+                valorPM10 = array[8] * 256;
+                valorPM10 += array[9];
+            }break;
+            case 'panasonic':
+            {                
+                aux = array[6] * 256;
+                aux += array[5];
+                console.log('Partículas 2.5:', aux);
+                valorPM25 = aux;
+
+                aux = array[10] * 256;
+                aux += array[9];
+                console.log('Partículas 10:', aux);
+                valorPM10 = aux;
+
+                console.log('Partículas 2.5:', valorPM25);
+
+                console.log('Partículas 10:', valorPM10);
+            };
+            default:
+                {
+
+                }
+        }
         const fecha = new Date();
         
-        console.log(`${fecha.toISOString()} Valor partículas PM2.5:${valorPM25} - PM10.:${valorPM25}`)
+        console.log(`${fecha.toISOString()} Valor partículas PM2.5:${valorPM25} - PM10.:${valorPM10}`)
 
         if (idCaptura) {
             datosDBs.Crear_muestra({
                 capturaID: idCaptura,
                 fecha,
-                pm25: valorPM10,
+                pm25: valorPM25,
                 pm10: valorPM10
             })
             .then(()=>{
@@ -125,6 +171,8 @@ parser.on('data', (datos)=>{
             console.log('Muestra perdida porque no estaba lista la base de datos')
         }
 
+    }else{
+        console.log('Han llegado:', array.length);
     }
 })
 
