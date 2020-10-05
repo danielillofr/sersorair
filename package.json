@@ -6,7 +6,7 @@
   "bin": "ioniza.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "web_cloud.js"
+    "start": "node web_cloud.js"
   },
   "author": "",
   "license": "ISC",
