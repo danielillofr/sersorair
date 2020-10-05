@@ -164,7 +164,7 @@ parser.on('data', (datos)=>{
                 console.log('Error:', error)
             })
             io.emit('Medida',{
-                pm25: valorPM10,
+                pm25: valorPM25,
                 pm10: valorPM10
             } )
         }else{

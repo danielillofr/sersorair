@@ -34,9 +34,9 @@ Obtener_capturas = () => {
     })
 }
 
+
 Obtener_captura = (id) => {
     return new Promise((resolve,reject)=>{
-        console.log('A ver')
         Datos.find({capturaID: id}, (err, datos)=>{
             if (err) {
                 reject(err);
@@ -46,6 +46,41 @@ Obtener_captura = (id) => {
         })
     })
 }
+
+Obtener_ultimo_elemento = (id) => {
+    return new Promise((resolve,reject)=>{
+        Datos.findOne({capturaID: id})
+             .sort({fecha: -1})
+             .exec((err, ultimo)=>{
+                 if (err) {
+                     reject (err)
+                 }else{
+                     resolve (ultimo)
+                 }
+             })
+    })
+}
+
+Obtener_capturas_con_ultimo = async() => {
+    try{
+        capConUltimo = [];
+        capturas = await Obtener_capturas();
+        for (i=0; i < capturas.length; i++) {
+            ultimo = await Obtener_ultimo_elemento(capturas[i]._id);
+            console.log(ultimo);
+            capConUltimo.push({
+                captura: capturas[i],
+                ultimo: (ultimo)?(ultimo):{fecha:'',pm25:''}
+            })
+        }
+        return capConUltimo;
+    }catch(error) {
+        console.log(error)
+        throw new Error(error);
+    }
+
+}
+
 
 //Localiza un valor dentro del rango de valores, el del momento concreto
 Localizar_valor_pm25 = (datos, momento) => {
@@ -166,4 +201,4 @@ Crear_array_10 = async(capturaID, fechaInicial, fechaFinal, tiempo) => {
 }
 
 
-module.exports = {Crear_captura,Obtener_capturas,Obtener_captura,Crear_array_25,Crear_array_10}
+module.exports = {Crear_captura,Obtener_capturas,Obtener_captura,Crear_array_25,Crear_array_10,Obtener_capturas_con_ultimo}
