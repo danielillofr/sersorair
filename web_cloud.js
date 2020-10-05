@@ -57,6 +57,6 @@ Conectar_base_datos(process.env.URLDB)
         console.log('error conectando a base de datos:', error)
     })
 
-app.listen(3000, () => {
+app.listen(process.env.PORT, () => {
     console.log('Escuchando puerto: ', 3000);
 });
